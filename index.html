@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片颜色可视化</title>
+    <!-- 本地 ECharts -->
+    <script src="echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1500px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            height: calc(100vh - 280px);
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .controls-card {
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .right-section {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .controls-card h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            text-align: center;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .control-group input[type="file"],
+        .control-group input[type="number"],
+        .control-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, #667eea 0%, #667eea var(--value), #e0e0e0 var(--value), #e0e0e0 100%);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb:hover {
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.6);
+        }
+
+        .control-group input[type="range"]::-moz-range-track {
+            background: transparent;
+            border: none;
+        }
+
+        .k-value-display {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 1em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .control-group input[type="file"]::file-selector-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .control-group input[type="file"]::file-selector-button:hover {
+            background: #5568d3;
+        }
+
+        .control-group input[type="number"]:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        #analyzeBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #analyzeBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        #analyzeBtn:active {
+            transform: translateY(0);
+        }
+
+        #checkHarmonyBtn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        #checkHarmonyBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 87, 108, 0.6);
+        }
+
+        #checkHarmonyBtn:active {
+            transform: translateY(0);
+        }
+
+        .preview-section {
+            text-align: center;
+        }
+
+        .preview-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+        }
+
+        #preview {
+            max-width: 100%;
+            max-height: calc(100% - 80px);
+            display: none;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            object-fit: contain;
+        }
+
+        #preview.active {
+            display: block;
+        }
+
+        .preview-placeholder {
+            color: #999;
+            font-size: 0.95em;
+            padding: 20px 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            border: 2px dashed #e0e0e0;
+            height: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+        }
+
+        #preview.active ~ .preview-placeholder {
+            display: none;
+        }
+
+        .charts-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .charts-section h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 15px;
+            text-align: center;
+        }
+
+        #chart {
+            width: 100%;
+            flex: 1;
+            min-height: 400px;
+        }
+
+        #harmonyResult {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.05em;
+            color: #333;
+            line-height: 1.6;
+            display: none;
+            margin-top: 15px;
+        }
+
+        #harmonyResult.active {
+            display: block;
+        }
+
+        #emptyState {
+            color: #999;
+            font-size: 1.1em;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            min-height: 200px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .right-section {
+                grid-template-rows: auto auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            #chart {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>图片颜色可视化</h1>
+        </header>
+
+        <div class="main-content">
+            <div class="card controls-card">
+                <h2>分析设置</h2>
+                
+                <div class="control-group">
+                    <label for="imageInput">选择图片</label>
+                    <input type="file" id="imageInput" accept="image/*">
+                </div>
+
+                <div class="control-group">
+                    <label for="kValue">聚类K值 (颜色数量)</label>
+                    <input type="range" id="kValue" value="5" min="2" max="15">
+                    <div class="k-value-display">当前: <span id="kValueDisplay">5</span></div>
+                </div>
+
+                <div class="control-group">
+                    <label for="colorSpace">颜色空间</label>
+                    <select id="colorSpace">
+                        <option value="RGB">RGB (标准颜色空间)</option>
+                        <option value="LAB">LAB (感知均匀)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="chartType">图表类型</label>
+                    <select id="chartType">
+                        <option value="pie">饼图 (比例分布)</option>
+                        <option value="bar">柱状图 (像素数量)</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="analyzeBtn">开始分析</button>
+                    <button id="checkHarmonyBtn">检查和谐度</button>
+                </div>
+
+                <div class="control-group" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
+                    <label for="apiKeyInput">API密钥配置</label>
+                    <input type="password" id="apiKeyInput" placeholder="输入 CloseAI API 密钥">
+                    <button id="saveApiKeyBtn" style="width: 100%; margin-top: 8px; padding: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">保存密钥</button>
+                    <div id="apiKeyStatus" style="margin-top: 8px; font-size: 0.9em; color: #999;"></div>
+                </div>
+            </div>
+
+            <div class="right-section">
+                <div class="card preview-section">
+                    <h2>图片预览</h2>
+                    <img id="preview" src="" alt="预览图片">
+                    <div class="preview-placeholder">选择图片后将显示预览</div>
+                </div>
+
+                <div class="card charts-section">
+                    <h2>分析结果</h2>
+                    <div id="chart"></div>
+                    <div id="harmonyResult"></div>
+                    <div id="emptyState">
+                        点击"开始分析"按钮查看结果
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+</html>
